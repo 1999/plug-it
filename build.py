@@ -3,7 +3,7 @@ import sys
 import json
 import shutil
 
-AVAILABLE_TARGETS = ["i18n"]
+AVAILABLE_TARGETS = ("i18n")
 
 def main():
     if (sys.argv[1] in AVAILABLE_TARGETS) == False:
