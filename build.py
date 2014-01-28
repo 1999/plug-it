@@ -3,9 +3,12 @@ import sys
 import json
 import shutil
 
-AVAILABLE_TARGETS = ("i18n")
+AVAILABLE_TARGETS = ("i18n", "default")
 
 def main():
+    if len(sys.argv) == 1:
+        sys.argv.append("default")
+
     if (sys.argv[1] in AVAILABLE_TARGETS) == False:
         raise ValueError("Not available build target: " + sys.argv[1])
 
@@ -42,6 +45,16 @@ def i18n():
 
             with open(localeDirPath + "/messages.json", "w") as messages:
                 messages.write(json.dumps(data, ensure_ascii=False))
+
+def default():
+    """
+    Build i18n, templates and copy CPA library from submodule
+    """
+    i18n()
+
+    srcPath = "chrome-platform-analytics/google-analytics-bundle.js"
+    dstPath = "src/lib/cpa.js"
+    shutil.copyfile(srcPath, dstPath)
 
 if __name__ == "__main__":
     main()
