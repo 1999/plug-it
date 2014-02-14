@@ -5,7 +5,7 @@ import shutil
 import re
 import time
 
-AVAILABLE_TARGETS = ("i18n", "rebuildConfig", "default", "templates")
+AVAILABLE_TARGETS = ("i18n", "rebuildConfig", "default", "templates", "watch")
 
 def main():
     if len(sys.argv) == 1:
@@ -95,13 +95,44 @@ def templates():
     with open("src/sandbox/alltemplates.js", mode='w', encoding='utf-8') as tplFile:
         tplFile.write('Templates = ' + json.dumps(combined, sort_keys=True, indent=4))
 
+def watch():
+    templatesMDates = {}
+    buildMDates = {}
+
+    while True:
+        filesNeedRebuild = []
+
+        for file in os.listdir("templates"):
+            filePath = os.path.join("templates", file)
+            modifiedTimestamp = int(os.stat(filePath).st_mtime)
+            if ((file in templatesMDates) == False or templatesMDates[file] != modifiedTimestamp):
+                filesNeedRebuild.append(filePath)
+
+            templatesMDates[file] = modifiedTimestamp
+
+        for file in os.listdir("build"):
+            filePath = os.path.join("build", file)
+            modifiedTimestamp = int(os.stat(filePath).st_mtime)
+            if ((file in buildMDates) == False or buildMDates[file] != modifiedTimestamp):
+                filesNeedRebuild.append(filePath)
+
+            buildMDates[file] = modifiedTimestamp
+
+        if filesNeedRebuild:
+            print("Rebuilding app data. New files: " + ", ".join(filesNeedRebuild))
+            i18n()
+            rebuildConfig()
+            templates()
+
+        time.sleep(1)
+
 def default():
     """
     Build i18n, templates and copy CPA library from submodule
     """
     i18n()
     rebuildConfig()
-    templates();
+    templates()
 
     srcPath = "chrome-platform-analytics/google-analytics-bundle.js"
     dstPath = "src/lib/cpa.js"
