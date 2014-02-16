@@ -117,19 +117,29 @@
         } else if (!dataUriToBlobWorker) {
             dataUriToBlobWorker = new Worker("/lib/worker.js");
 
-            dataUriToBlobWorker.onmessage = function (evt) {
-                cb(evt.data);
-
+            dataUriToBlobWorker.addEventListener("message", function (evt) {
                 dataUriToBlobTerminateTimeoutId = setTimeout(function () {
                     dataUriToBlobWorker.terminate();
 
                     dataUriToBlobWorker = null;
                     dataUriToBlobTerminateTimeoutId = null;
                 }, 30000);
-            };
+            }, false);
         }
 
-        dataUriToBlobWorker.postMessage(dataURI);
+        var id = uuid();
+
+        dataUriToBlobWorker.addEventListener("message", function onMessageListener(evt) {
+            if (evt.data.id === id) {
+                cb(evt.data.blob);
+                dataUriToBlobWorker.removeEventListener("message", onMessageListener, false);
+            }
+        }, false);
+
+        dataUriToBlobWorker.postMessage({
+            id: id,
+            uri: dataURI
+        });
     };
 
     exports.getAllDirectoryFileEntries = function (dir, cb) {

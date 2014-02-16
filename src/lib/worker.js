@@ -1,5 +1,8 @@
 onmessage = function (evt) {
-    postMessage(dataURItoBlob(evt.data));
+    postMessage({
+        id: evt.data.id,
+        blob: dataURItoBlob(evt.data.uri)
+    });
 };
 
 function dataURItoBlob(dataURI) {

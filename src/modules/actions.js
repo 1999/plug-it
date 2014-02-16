@@ -358,15 +358,17 @@ Actions = (function () {
                 this.toggleClass("hidden", !this.hasClass("resize-processing"));
             });
 
-            var writeTasks = {};
+            var writeTasks = [];
             var bar = $(resizeProgress, ".progress-bar");
             var resizeProgressPrc = $(".resize-progress-prc");
             var tasksDone = 0;
 
-            Object.keys(selectedPhotosLocal).forEach(function (id, index, totalIds) {
-                writeTasks[id] = function (callback) {
-                    var photo = $("[data-id='" + id + "']");
+            var selectedPhotosIds = Object.keys(selectedPhotosLocal).filter(function (id) {
+                return !selectedPhotosLocal[id].skip;
+            });
 
+            selectedPhotosIds.forEach(function (id) {
+                writeTasks.push(function (callback) {
                     getBase64FromFileEntry(selectedPhotosLocal[id].entry, function (dataUri) {
                         var img = new Image;
                         img.onload = function () {
@@ -393,12 +395,13 @@ Actions = (function () {
 
                             restoreExifData(dataUri, resizedDataUri, function (newBlob) {
                                 overWriteEntry(selectedPhotosLocal[id].entry, newBlob, function () {
+                                    var photo = $("[data-id='" + id + "']").addClass("img-container-done");
+
                                     tasksDone += 1;
-                                    var percentsDone = Math.floor(tasksDone / totalIds.length * 100);
+                                    var percentsDone = Math.floor(tasksDone / selectedPhotosIds.length * 100);
 
                                     bar.attr("aria-valuenow", percentsDone).css("width", percentsDone + "%");
                                     resizeProgressPrc.html(percentsDone);
-                                    photo.addClass("img-container-done");
 
                                     callback();
                                 });
@@ -407,7 +410,7 @@ Actions = (function () {
 
                         img.src = dataUri;
                     });
-                };
+                });
             });
 
             parallel(writeTasks, 1, function () {
