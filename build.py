@@ -5,7 +5,8 @@ import shutil
 import re
 import time
 
-AVAILABLE_TARGETS = ("i18n", "rebuildConfig", "default", "templates", "watch")
+
+AVAILABLE_TARGETS = ("i18n", "rebuildConfig", "default", "templates", "watch", "release")
 
 def main():
     if len(sys.argv) == 1:
@@ -125,6 +126,36 @@ def watch():
             templates()
 
         time.sleep(1)
+
+def release():
+    """
+    Builds release ZIP for Chrome Web Store
+    """
+    i18n()
+    templates()
+
+    if os.path.isdir("out") == False:
+        os.mkdir("out")
+
+    shutil.copytree("src", "out/src")
+
+    # delete key from manifest
+    with open("src/manifest.json", "r") as manifest:
+        manifestData = json.loads(manifest.read())
+        del manifestData["key"]
+
+        with open("out/src/manifest.json", "w") as builtManifest:
+            builtManifest.write(json.dumps(manifestData, indent=4))
+
+    # rebuild config with release data
+    with open("build/config.cws.json") as file:
+        releaseConfig = json.loads(file.read())
+        rebuildConfig(config_file_path="out/src/config.js", tweak_map=releaseConfig)
+
+    # zip archive
+    shutil.make_archive("release", "zip", root_dir="out/src")
+    shutil.rmtree("out/src")
+    shutil.move("release.zip", "out/release.zip")
 
 def default():
     """
