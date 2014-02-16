@@ -294,6 +294,16 @@
                     Authorization: "Bearer " + token
                 },
                 onload: function () {
+                    if (this.status === 401) { // token revoke
+                        chrome.identity.removeCachedAuthToken({
+                            token: token
+                        }, function () {
+                            auth(onSuccess, onFail);
+                        });
+
+                        return;
+                    }
+
                     var json;
 
                     try {
