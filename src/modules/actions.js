@@ -358,12 +358,26 @@ Actions = (function () {
         },
 
         localStep3: function Actions_localStep3(params) {
-            params.numPhotosSelected = Object.keys(photosSelectedToResize).length;
-            params.size = 2048;
-            params.quality = 60;
-            params.allowEnlarge = false;
+            // delete inactive photos
+            Object.keys(photosSelectedToResize).forEach(function (id) {
+                if (photosSelectedToResize[id].skip) {
+                    delete photosSelectedToResize[id];
+                }
+            });
 
-            params.photos = Object.keys(photosSelectedToResize).map(function (id) {
+            var selectedPhotos = Object.keys(photosSelectedToResize);
+            var fit = Settings.get("lastUsedFitType");
+
+            params.numPhotosSelected = selectedPhotos.length;
+            params.size = Settings.get("lastUsedSize");
+            params.quality = Settings.get("lastUsedQuality");
+            params.allowEnlarge = Settings.get("lastUsedAllowEnlarge");
+
+            params.fitWidth = (fit === "width");
+            params.fitHeight = (fit === "height");
+            params.fitBiggest = (fit === "biggest");
+
+            params.photos = selectedPhotos.map(function (id) {
                 return {
                     id: id,
                     dataUri: photosSelectedToResize[id].dataUri
@@ -376,7 +390,33 @@ Actions = (function () {
         },
 
         selectPhoto: function Actions_selectPhoto() {
-            this.toggleClass("img-selected");
+            var id = this.data("id");
+            var isProcessing = !$("header .header-processing").hasClass("hidden");
+
+            if (this.toggleClass("img-selected")) {
+                delete photosSelectedToResize[id].skip;
+            } else {
+                photosSelectedToResize[id].skip = true;
+            }
+
+            if (isProcessing)
+                return;
+
+            var noPhotosSelected = Object.keys(photosSelectedToResize).every(function (id) {
+                return (photosSelectedToResize[id].skip === true);
+            });
+
+            if (noPhotosSelected) {
+                // update header
+                $$("header .text").each(function () {
+                    this.toggleClass("hidden", !this.hasClass("header-no-active"));
+                });
+            } else {
+                // update header
+                $$("header .text").each(function () {
+                    this.toggleClass("hidden", !this.hasClass("header-procede"));
+                });
+            }
         },
 
         releselectPhotos: function Actions_releselectPhotos() {
@@ -393,6 +433,8 @@ Actions = (function () {
         },
 
         startResize: function Actions_startResize() {
+            $(".beware").addClass("hidden");
+
             var optionsForm = $(".form-resize-options");
             var resizeProgress = $(".resize-progress").removeClass("hidden");
 
@@ -400,6 +442,18 @@ Actions = (function () {
             var fitType = $(optionsForm, ".fit-type").val();
             var fitSize = $(optionsForm, ".fit-num").val();
             var allowEnlarge = $(optionsForm, "[name='enlarge']").checked;
+
+            // save selected params for future use
+            Settings.set("lastUsedQuality", quality);
+            Settings.set("lastUsedSize", fitSize);
+            Settings.set("lastUsedAllowEnlarge", allowEnlarge);
+            Settings.set("lastUsedSize", fitSize);
+            Settings.set("lastUsedFitType", fitType);
+
+            // update header
+            $$("header .text").each(function () {
+                this.toggleClass("hidden", !this.hasClass("resize-processing"));
+            });
 
             var writeTasks = {};
             var bar = $(resizeProgress, ".progress-bar");
@@ -457,8 +511,10 @@ Actions = (function () {
 
                 resizeProgress.removeClass("progress-striped");
 
-                $(".resize-options").addClass("hidden");
-                $(".resize-done").removeClass("hidden");
+                // update header
+                $$("header .text").each(function () {
+                    this.toggleClass("hidden", !this.hasClass("resize-done"));
+                });
             });
         },
 
@@ -558,6 +614,10 @@ Actions = (function () {
                     // ...
                 });
             }
+        },
+
+        enough: function Actions_enough() {
+            window.close();
         },
 
         addNewProfile: function Actions_addNewProfile() {

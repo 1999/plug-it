@@ -111,6 +111,10 @@ header h1 .device-select {
     background: #428bca;
 }
 
+.beware {
+    padding: 8px;
+}
+
 .img-wrapper .img-container {
     width: 100px;
     height: 100px;

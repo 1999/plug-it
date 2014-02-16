@@ -2,7 +2,11 @@
     "local": {
         "appUsedToday": true,
         "googleProfiles": [],
-        "isDebug": true
+        "isDebug": true,
+        "lastUsedAllowEnlarge": false,
+        "lastUsedFitType": "biggest",
+        "lastUsedQuality": 92,
+        "lastUsedSize": 2048
     },
     "sync": {
         "unlimited": false
