@@ -2,14 +2,19 @@ window.onerror = function (msg, url, line, column, err) {
     var msgError = msg + " in " + url + " (line: " + line + ")";
     console.error(msgError, err && err.stack || "");
 
-    // if (!Settings.get("isDebug")) {
-    //     CPA.sendEvent("Errors", chrome.runtime.getManifest().version, {
-    //         msg: msg,
-    //         url: url,
-    //         line: line,
-    //         trace: err && err.stack || ""
-    //     });
-    // }
+    chrome.storage.local.get({
+        "settings.isDebug": Config.default_settings_local.isDebug
+    }, function (records) {
+        if (records["settings.isDebug"])
+            return;
+
+        CPA.sendEvent("Errors", chrome.runtime.getManifest().version, {
+            msg: msg,
+            url: url,
+            line: line,
+            trace: err && err.stack || ""
+        });
+    });
 };
 
 parallel({

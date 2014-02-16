@@ -1,5 +1,6 @@
 {
     "local": {
+        "appInstallDate": 0,
         "appUsedToday": true,
         "googleProfiles": [],
         "isDebug": true,
