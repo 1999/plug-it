@@ -17,6 +17,9 @@ Actions = (function () {
             this.toggleClass("hidden", !this.hasClass("header-processing"));
         });
 
+        // update navigation
+        $$("nav span[role='button']").addClass("tmp-disabled");
+
         // it's faster to render template for one photo and add dataset item N times
         // than to render template 100 times with different parameters
         Templates.render("photo", {
@@ -81,6 +84,9 @@ Actions = (function () {
                 });
 
                 $("header .new-done").toggleClass("hidden", isLoadedAgain);
+
+                // update navigation
+                $$("nav span[role='button']").removeClass("tmp-disabled");
             });
         });
     }
@@ -113,6 +119,9 @@ Actions = (function () {
             $$("header .text").each(function () {
                 this.toggleClass("hidden", !this.hasClass("header-processing"));
             });
+
+            // update navigation
+            $$("nav span[role='button']").addClass("tmp-disabled");
 
             // it's faster to render template for one photo and add dataset item N times
             // than to render template 100 times with different parameters
@@ -183,6 +192,9 @@ Actions = (function () {
                     $$("header .text").each(function () {
                         this.toggleClass("hidden", !this.hasClass(anyPhotosActive ? "header-procede" : "header-no-active"));
                     });
+
+                    // update navigation
+                    $$("nav span[role='button']").removeClass("tmp-disabled");
                 });
             });
         });
@@ -367,6 +379,9 @@ Actions = (function () {
                 this.toggleClass("hidden", !this.hasClass("resize-processing"));
             });
 
+            // update navigation
+            $$("nav span[role='button']").addClass("tmp-disabled");
+
             var writeTasks = [];
             var bar = $(resizeProgress, ".progress-bar");
             var resizeProgressPrc = $(".resize-progress-prc");
@@ -431,6 +446,9 @@ Actions = (function () {
                 $$("header .text").each(function () {
                     this.toggleClass("hidden", !this.hasClass("resize-done"));
                 });
+
+                // update navigation
+                $$("nav span[role='button']").removeClass("tmp-disabled");
             });
         },
 
@@ -542,6 +560,9 @@ Actions = (function () {
                     this.toggleClass("hidden", !this.hasClass("upload-processing"));
                 });
 
+                // update navigation
+                $$("nav span[role='button']").addClass("tmp-disabled");
+
                 var selectedPhotosIds = Object.keys(selectedPhotosServer).filter(function (id) {
                     return !selectedPhotosServer[id].skip;
                 });
@@ -612,6 +633,9 @@ Actions = (function () {
                     $$("header .text").each(function () {
                         this.toggleClass("hidden", !this.hasClass("upload-done"));
                     });
+
+                    // update navigation
+                    $$("nav span[role='button']").removeClass("tmp-disabled");
                 });
             }, function () {
                 authFail.removeClass("hidden");

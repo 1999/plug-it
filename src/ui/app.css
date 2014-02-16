@@ -31,6 +31,12 @@ header span[role="button"].disabled {
     pointer-events: none;
 }
 
+header span[role="button"].tmp-disabled {
+    color: #666;
+    cursor: default;
+    pointer-events: none;
+}
+
 header h1 {
     margin: 0 0 0 16px;
     color: #aaa;
