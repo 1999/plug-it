@@ -1,0 +1,10 @@
+{
+    "local": {
+        "appUsedToday": true,
+        "googleProfiles": [],
+        "isDebug": true
+    },
+    "sync": {
+        "unlimited": false
+    }
+}

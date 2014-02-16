@@ -1,0 +1,58 @@
+<header class="navbar" role="banner">
+    {{> navigation}}
+    <h1>
+        <span class="resize-options">
+            {{numPhotosSelected}} photos selected. <a href="#" data-action="click/startResize">Resize 'em</a>
+        </span>
+        <span class="resize-done hidden">
+            Done! <a href="#" data-action="click/home" data-dispatch="1">Again</a>
+        </span>
+    </h1>
+</header>
+
+<div class="global-wrapper">
+    <!-- Появляется после старта -->
+    <div class="progress progress-striped active hidden resize-progress">
+        <div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%"></div>
+    </div>
+
+    <form class="form-inline form-resize-options" role="form">
+        <h2>Resize options</h2>
+
+        <div class="option-selector">
+            <select class="form-control fit-type">
+                <option value="width">Fit width</option>
+                <option value="height">Fit height</option>
+                <option value="biggest">Fit biggest dimension</option>
+            </select>
+
+            <input class="form-control fit-num" min="1" size="4" type="number" placeholder="px" value="{{size}}"> px
+        </div>
+
+        <div class="option-selector">
+            <label>
+                Result photos quality: <span class="quality-label">{{quality}}</span>%
+                <input type="range" name="quality" value="{{quality}}" step="1" min="0" max="100" data-action="change/changeQualityLabel">
+            </label>
+        </div>
+
+        <div class="option-selector">
+            <label>
+                <input type="checkbox" name="enlarge" value=""{{#allowEnlarge}} checked{{/allowEnlarge}}>
+                Allow photo enlarging
+            </label>
+        </div>
+    </form>
+
+    <h3>Resize progress: <span class="resize-progress-prc">0</span>%</h3>
+
+    <div class="img-stripe">
+    {{#photos}}
+        <div class="img-thumbnail img-container" style="background-image: url({{dataUri}})" data-id="{{id}}">
+            <div class="img-okmarker">
+                <span class="glyphicon glyphicon-ok"></span>
+            </div>
+        </div>
+    {{/photos}}
+    </div>
+</div>

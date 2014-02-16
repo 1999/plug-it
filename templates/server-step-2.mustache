@@ -1,0 +1,27 @@
+<header class="navbar server-step-2" role="banner">
+    {{> navigation}}
+    <h1>
+        <span class="device-select">
+            <select class="form-control device-select" data-action="change/serverStep2DeviceSelected" data-dispatch="1">
+                {{#devices}}
+                    <option value="None">Select device...</option>
+                    <option value="{{id}}"{{#selected}} selected{{/selected}}>{{name}}</option>
+                {{/devices}}
+            </select>
+        </span>
+        <span class="device-parsed hidden">
+            Done! <a href="#" data-action="click/serverStep3" data-dispatch="1">Procede</a> or <a href="#" data-action="click/releselectDevice">re-select</a> device
+        </span>
+    </h1>
+</header>
+
+<div class="global-wrapper">
+    <div class="progress progress-striped active hidden">
+        <div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%"></div>
+    </div>
+
+    <div class="text-center lead no-photos-found hidden">No photos found</div>
+    <div class="text-center lead scanning-device hidden">Scanning device for photos. Please wait...</div>
+
+    <div class="device-photos"></div>
+</div>

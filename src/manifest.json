@@ -1,0 +1,62 @@
+{
+    "name" : "__MSG_appName__ DEV",
+    "version" : "1.0",
+    "manifest_version" : 2,
+    "minimum_chrome_version" : "30",
+    "description" : "__MSG_appDescription__",
+    "default_locale" : "en",
+
+    "app": {
+        "background": {
+            "scripts": [
+                "config.js",
+                "lib/utils.js",
+                "lib/cpa.js",
+                "background/templates.js",
+                "background/cpa.js",
+                "background/core.js"
+            ]
+        }
+    },
+
+    "icons" : {
+        "128" : "pics/icons/128.png",
+        "48" : "pics/icons/48.png",
+        "16" : "pics/icons/16.png"
+    },
+
+    "kiosk_enabled": true,
+    "offline_enabled": true,
+
+    "sandbox": {
+        "pages": ["sandbox/page.html"]
+    },
+
+    "oauth2": {
+        "client_id": "156543881811-673tat38kmekoji4bbmsj2iu0fr5eqai.apps.googleusercontent.com",
+        "scopes": [
+            "https://picasaweb.google.com/data/",
+            "https://www.googleapis.com/auth/plus.me"
+        ]
+    },
+
+    "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAqS6YF+HpVe8+4MwBMdmyG5REQ+MTarh5gnEkycButYb2pOST1jGuEHunc2NpZkGWEo8/CVJ7sPLciD6dJuQKrKjZ6qZoI11A6aJl5BTqWoGZWmV+WstyAjvdgY7SGlxq3IVZTryl0XxL+YbMYaZVqCA421lvSXtlce6F8Y6ra0ZsRasTGQuZWZvO8Ie1cE2ls7L2p2Anhv05GiaVXnRPjwwwY4NrJYRvz44LVZ2h3jb0JtQHYlWcEr0YKkG4r9BUDNZGXN/WmW4unybhnZcotVvg6bmD/0GTbOf9W3H1FOG/LGX4wri0PnrAbiHaHcBxfKTlNog1P9tTK9JeRAvLrQIDAQAB",
+
+    "permissions" : [
+        "alarms",
+        "app.runtime",
+        "app.window",
+        "system.storage",
+        {
+            "mediaGalleries": ["read", "allAutoDetected"]
+        },
+        {
+            "fileSystem": ["write", "retainEntries", "directory"]
+        },
+        "identity",
+        "notifications",
+        "storage",
+        "unlimitedStorage",
+        "*://*/*"
+    ]
+}

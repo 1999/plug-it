@@ -1,0 +1,164 @@
+html, body {
+    overflow-y: visible;
+}
+
+header {
+    background: rgb(64, 64, 64);
+    padding: 8px 16px;
+    border-radius: 0 !important;
+    margin-bottom: 12px;
+}
+
+header nav,
+header h1 {
+    display: inline-block;
+}
+
+header span[role="button"] {
+    font-size: 24px;
+    color: white;
+    margin-right: 8px;
+    cursor: pointer;
+}
+
+header span[role="button"]:active {
+    text-shadow: 0 0 3px white;
+}
+
+header span[role="button"].disabled {
+    color: #666;
+    cursor: default;
+    pointer-events: none;
+}
+
+header h1 {
+    margin: 0 0 0 16px;
+    color: #aaa;
+    font-size: 28px;
+}
+
+header h1 a {
+    color: white;
+    text-decoration: underline;
+}
+
+header h1 a:hover {
+    color: white;
+    text-decoration: none;
+}
+
+header h1 .device-select {
+    display: inline-block;
+    width: auto;
+    vertical-align: top;
+    height: 32px;
+}
+
+.spinner {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: url(/pics/ajax-loader.gif) 50% 50% no-repeat;
+}
+
+.global-wrapper {
+    padding: 12px;
+}
+
+.form-resize-options h2 {
+    margin-top: 0;
+    font-size: 24px;
+}
+
+.form-resize-options label {
+    font-weight: normal;
+}
+
+.form-resize-options .fit-num {
+    width: 100px;
+    margin-left: 4px;
+}
+
+.form-resize-options .option-selector {
+    margin-bottom: 12px;
+}
+
+.form-resize-options input[type="range"] {
+    margin-top: 4px;
+}
+
+.form-resize-options input[type="checkbox"] {
+    margin: 0 4px 0 0;
+}
+
+
+.step1-select-form {
+    margin-top: 32px;
+    text-align: center;
+}
+
+.step1-select-form .form-group {
+    padding: 0 6px;
+}
+
+.img-wrapper {
+    margin: 4px 2px;
+}
+
+.img-selected {
+    background: #428bca;
+}
+
+.img-wrapper .img-container {
+    width: 100px;
+    height: 100px;
+    background-position: center center;
+    background-size: cover;
+    position: relative;
+}
+
+.img-okmarker {
+    display: none;
+    background: #428bca;
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    right: 0;
+    width: 20px;
+    height: 20px;
+    border-bottom-left-radius: 2px;
+    font-size: 14px;
+    line-height: 20px;
+    text-align: center;
+}
+
+.img-okmarker .glyphicon {
+    line-height: inherit;
+    color: white;
+}
+
+.img-selected figcaption {
+    color: white;
+}
+
+.img-selected .img-okmarker,
+.img-container-done .img-okmarker {
+    display: block;
+}
+
+.img-stripe .img-container {
+    width: 100px;
+    background-position: center center;
+    background-size: cover;
+    height: 80px;
+    -webkit-filter: grayscale(1);
+    border-bottom: 8px solid rgba(255, 255, 255, .4);
+    position: relative;
+}
+
+.img-stripe .img-container-done {
+    -webkit-filter: none;
+    border-bottom-color: #428bca;
+}

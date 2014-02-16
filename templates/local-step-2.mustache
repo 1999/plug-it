@@ -1,0 +1,23 @@
+<header class="navbar" role="banner">
+    {{> navigation}}
+    <h1>
+        <span class="header-select-type text">
+            Select <a href="#" data-action="click/selectLocalPhotos">photos</a> or <a href="#" data-action="click/selectLocalPhotosDir">directory with them</a> to resize
+        </span>
+        <span class="header-procede text hidden">
+            <span class="new-done hidden">Done! </span><a href="#" data-action="click/localStep3" data-dispatch="1">Procede</a> or <a href="#" data-action="click/releselectPhotos">re-select</a> photos
+        </span>
+        <span class="header-processing text hidden">Processing...</span>
+    </h1>
+</header>
+
+<div class="global-wrapper hidden">
+    <div class="progress progress-striped active hidden">
+        <div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%"></div>
+    </div>
+
+    <div class="text-center lead status no-photos-found hidden">No photos found</div>
+    <div class="text-center lead status no-photos-chosen hidden">No photos chosen</div>
+    <div class="text-center lead status searching-photos hidden">Searching for photos. Please wait...</div>
+    <div class="text-center lead status searching-dir-photos hidden">Scanning directory structure. Please wait...</div>
+</div>
