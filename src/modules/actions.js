@@ -391,16 +391,17 @@ Actions = (function () {
                                     break;
                             }
 
-                            var newBlob = restoreExifData(dataUri, resizedDataUri);
-                            overWriteEntry(selectedPhotosLocal[id].entry, newBlob, function () {
-                                tasksDone += 1;
-                                var percentsDone = Math.floor(tasksDone / totalIds.length * 100);
+                            restoreExifData(dataUri, resizedDataUri, function (newBlob) {
+                                overWriteEntry(selectedPhotosLocal[id].entry, newBlob, function () {
+                                    tasksDone += 1;
+                                    var percentsDone = Math.floor(tasksDone / totalIds.length * 100);
 
-                                bar.attr("aria-valuenow", percentsDone).css("width", percentsDone + "%");
-                                resizeProgressPrc.html(percentsDone);
-                                photo.addClass("img-container-done");
+                                    bar.attr("aria-valuenow", percentsDone).css("width", percentsDone + "%");
+                                    resizeProgressPrc.html(percentsDone);
+                                    photo.addClass("img-container-done");
 
-                                callback();
+                                    callback();
+                                });
                             });
                         };
 
@@ -483,6 +484,15 @@ Actions = (function () {
                     selectDevice(fsData.fs, fsData.name);
                 }
             });
+        },
+
+        reselectDevice: function Actions_reselectDevice() {
+            var params = {
+                back: !$("nav span[data-action='click/back']").hasClass("disabled"),
+                forward: !$("nav span[data-action='click/forward']").hasClass("disabled")
+            };
+
+            Actions.serverStep2(params);
         },
 
         serverStep3: function Actions_serverStep3(params) {

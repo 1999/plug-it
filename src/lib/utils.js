@@ -1,6 +1,13 @@
 (function (exports) {
     "use strict";
 
+    // use one worker to generate blob from dataUri
+    // it's intresting to know, but web worker does this 10x times faster
+    // than UI thread. Whoa!
+    var dataUriToBlobWorker;
+    var dataUriToBlobTerminateTimeoutId;
+
+
     exports.parallel = function (tasks, concurrency, callback, ctx) {
         if (typeof concurrency === "function") {
             ctx = callback;
@@ -102,17 +109,27 @@
         });
     };
 
-    exports.dataURItoBlob = function (dataURI) {
-        var parts = dataURI.match(/data:([^;]*)(;base64)?,([0-9A-Za-z+/]+)/);
-        var binaryStr = atob(parts[3]);
-        var buffer = new ArrayBuffer(binaryStr.length);
-        var view = new Uint8Array(buffer);
+    exports.dataURItoBlob = function (dataURI, cb) {
+        // lifetime of web worker is 30 seconds
+        // if it's lasting longer, kill it with <s>fire</s> terminate()
+        if (dataUriToBlobTerminateTimeoutId) {
+            clearTimeout(dataUriToBlobTerminateTimeoutId);
+        } else if (!dataUriToBlobWorker) {
+            dataUriToBlobWorker = new Worker("/lib/worker.js");
 
-        for (var i = 0; i < view.length; i++) {
-            view[i] = binaryStr.charCodeAt(i);
+            dataUriToBlobWorker.onmessage = function (evt) {
+                cb(evt.data);
+
+                dataUriToBlobTerminateTimeoutId = setTimeout(function () {
+                    dataUriToBlobWorker.terminate();
+
+                    dataUriToBlobWorker = null;
+                    dataUriToBlobTerminateTimeoutId = null;
+                }, 30000);
+            };
         }
 
-        return new Blob([view], {type: parts[1]});
+        dataUriToBlobWorker.postMessage(dataURI);
     };
 
     exports.getAllDirectoryFileEntries = function (dir, cb) {
@@ -176,11 +193,9 @@
         });
     };
 
-    exports.restoreExifData = function (origBase64, resizedBase64) {
+    exports.restoreExifData = function (origBase64, resizedBase64, cb) {
         var magicBase64 = ExifRestorer.restore(origBase64, resizedBase64);
-        var magicBlob = dataURItoBlob(magicBase64);
-
-        return magicBlob;
+        dataURItoBlob(magicBase64, cb);
     };
 
     exports.requestRemovableFilesystems = function (cb) {
@@ -227,8 +242,7 @@
                     quality: 1
                 });
 
-                var newBlob = restoreExifData(dataUri, resizedDataUri);
-                cb(newBlob);
+                restoreExifData(dataUri, resizedDataUri, cb);
             };
 
             img.src = dataUri;
