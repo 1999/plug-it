@@ -3,11 +3,12 @@ Actions = (function () {
 
     var DATASET_ID_PLACEHOLDER = "place4id";
 
-    var photosSelectedToResize = {}; // object (uuid: {FileEntry, dataUri}, ...)
-    var deviceSelectedToUpload; // object (fs: FileSystem, entries: object)
+    // object (uuid: {FileEntry, dataUri, skip}, ...)
+    var selectedPhotosLocal = {};
+    var selectedPhotosServer = {};
 
 
-    function selectLocalPhotos(entries, isLoadedAgain) {
+    function selectLocalPhotos(entriesData, isLoadedAgain) {
         var wrapperElem = $(".global-wrapper").removeClass("hidden");
         var progress = $(wrapperElem, ".progress");
 
@@ -18,39 +19,42 @@ Actions = (function () {
 
         // it's faster to render template for one photo and add dataset item N times
         // than to render template 100 times with different parameters
-        Templates.render("photo", {id: DATASET_ID_PLACEHOLDER}, function (html) {
+        Templates.render("photo", {
+            id: DATASET_ID_PLACEHOLDER,
+            type: "local"
+        }, function (html) {
             var resultHtmlChunks = [];
             var loadImageTasks = {};
 
             var totalImagesLoaded = 0;
             var bar = $(progress, ".progress-bar");
+            var anyPhotosActive = false;
 
             // set UUID to every FileEntry
-            entries.forEach(function (fileEntry) {
+            entriesData.forEach(function (entryData) {
                 var id = uuid();
-                photosSelectedToResize[id] = {
-                    entry: fileEntry,
-                    dataUri: ""
+                selectedPhotosLocal[id] = {
+                    entry: entryData.entry,
+                    dataUri: "",
+                    skip: entryData.skip
                 };
 
                 loadImageTasks[id] = function (callback) {
-                    var photo = $(wrapperElem, "[data-id='" + id + "']");
-                    if (!photo) {
-                        callback();
-                        return;
-                    }
+                    readChosenImageInfo(selectedPhotosLocal[id].entry, function (res) {
+                        selectedPhotosLocal[id].dataUri = res.dataUri;
 
-                    readChosenImageInfo(photosSelectedToResize[id].entry, function (res) {
-                        photosSelectedToResize[id].dataUri = res.dataUri;
-
-                        photo.addClass("img-selected");
+                        var photo = $(wrapperElem, "[data-id='" + id + "']");
+                        photo.toggleClass("img-selected", !entryData.skip);
                         $(photo, ".spinner").addClass("hidden");
                         $(photo, ".img-container").css("backgroundImage", "url(" + res.dataUri + ")");
                         $(photo, ".photos-dms").html(res.width + "x" + res.height);
 
                         totalImagesLoaded += 1;
-                        var barPercentsLoaded = Math.floor(totalImagesLoaded / entries.length * 100);
+                        var barPercentsLoaded = Math.floor(totalImagesLoaded / entriesData.length * 100);
                         bar.css("width", barPercentsLoaded + "%").attr("aria-valuemin", barPercentsLoaded);
+
+                        if (!entryData.skip)
+                            anyPhotosActive = true;
 
                         callback();
                     });
@@ -73,7 +77,7 @@ Actions = (function () {
 
                 // update header
                 $$("header .text").each(function () {
-                    this.toggleClass("hidden", !this.hasClass("header-procede"));
+                    this.toggleClass("hidden", !this.hasClass(anyPhotosActive ? "header-procede" : "header-no-active"));
                 });
 
                 $("header .new-done").toggleClass("hidden", isLoadedAgain);
@@ -81,58 +85,65 @@ Actions = (function () {
         });
     }
 
-    function selectDevice(fs, meta) {
-        var photosWrapper = $(".device-photos");
+    function selectDevice(fs, deviceName) {
+        var photosWrapper = $(".device-photos").empty();
         var progress = $(".progress");
 
-        if (!fs) {
-            deviceSelectedToUpload = null;
-            photosWrapper.empty();
+        selectedPhotosServer = {};
 
+        if (!fs)
             return;
-        }
 
-        var scanningDevice = $(".scanning-device").removeClass("hidden");
+        // update status
+        $$(".global-wrapper .status").each(function () {
+            this.toggleClass("hidden", !this.hasClass("scanning-device"));
+        });
 
         getDevicePhotos(fs, function (entries) {
-            entries.length = 3;
-
             if (!entries.length) {
-                scanningDevice.addClass("hidden");
-                $(".no-photos-found").removeClass("hidden");
+                // update status
+                $$(".global-wrapper .status").each(function () {
+                    this.toggleClass("hidden", !this.hasClass("no-photos-found"));
+                });
+
                 return;
             }
 
-            deviceSelectedToUpload = {
-                fs: fs,
-                entries: {}
-            };
+            // update header
+            $$("header .text").each(function () {
+                this.toggleClass("hidden", !this.hasClass("header-processing"));
+            });
 
             // it's faster to render template for one photo and add dataset item N times
             // than to render template 100 times with different parameters
-            Templates.render("photo", {id: DATASET_ID_PLACEHOLDER}, function (html) {
+            Templates.render("photo", {
+                id: DATASET_ID_PLACEHOLDER,
+                type: "server"
+            }, function (html) {
                 var resultHtmlChunks = [];
                 var loadImageTasks = {};
 
                 var totalImagesLoaded = 0;
                 var bar = $(progress, ".progress-bar");
+                var processedDevicePhotos = Settings.get("devices")[deviceName] || [];
 
                 // set UUID to every FileEntry
                 entries.forEach(function (fileEntry) {
                     var id = uuid();
-                    deviceSelectedToUpload.entries[id] = {
+                    selectedPhotosServer[id] = {
                         entry: fileEntry,
                         dataUri: ""
                     };
 
                     loadImageTasks[id] = function (callback) {
-                        readChosenImageInfo(deviceSelectedToUpload.entries[id].entry, function (res) {
-                            deviceSelectedToUpload.entries[id].dataUri = res.dataUri;
+                        readChosenImageInfo(fileEntry, function (res) {
+                            selectedPhotosServer[id].dataUri = res.dataUri;
 
-                            var photo = $(photosWrapper, "[data-id='" + id + "']").addClass("img-selected");
+                            var photo = $(photosWrapper, "[data-id='" + id + "']");
                             $(photo, ".spinner").addClass("hidden");
                             $(photo, ".img-container").css("backgroundImage", "url(" + res.dataUri + ")");
                             $(photo, ".photos-dms").html(res.width + "x" + res.height);
+                            photo.toggleClass("img-selected", (processedDevicePhotos.indexOf(fileEntry.fullPath) === -1))
 
                             totalImagesLoaded += 1;
                             var barPercentsLoaded = Math.floor(totalImagesLoaded / entries.length * 100);
@@ -148,8 +159,10 @@ Actions = (function () {
                     resultHtmlChunks.push(tmpFigureHTML);
                 });
 
-                // remove search placeholder, render progressbar and photos
-                scanningDevice.addClass("hidden");
+                // update status
+                $$(".global-wrapper .status").addClass("hidden");
+
+                // render progressbar and photos
                 progress.removeClass("hidden");
                 photosWrapper.html(resultHtmlChunks.join(""));
 
@@ -157,8 +170,10 @@ Actions = (function () {
                 parallel(loadImageTasks, 1, function () {
                     progress.removeClass("progress-striped");
 
-                    $("header .device-select").addClass("hidden");
-                    $("header .device-parsed").removeClass("hidden");
+                    // update header
+                    $$("header .text").each(function () {
+                        this.toggleClass("hidden", !this.hasClass("header-procede"));
+                    });
                 });
             });
         });
@@ -172,9 +187,9 @@ Actions = (function () {
         var uploadTasks = {};
         var photosUploaded = 0;
 
-        Object.keys(deviceSelectedToUpload.entries).forEach(function (id, index, totalIds) {
+        Object.keys(selectedPhotosServer).forEach(function (id, index, totalIds) {
             uploadTasks[id] = function (callback) {
-                var fileEntry = deviceSelectedToUpload.entries[id].entry;
+                var fileEntry = selectedPhotosServer[id].entry;
 
                 var uploadBlob = function (blob) {
                     upload(blob, fileEntry.name, token, function (link) {
@@ -293,19 +308,22 @@ Actions = (function () {
             Templates.render("local-step-2", params, function (html) {
                 document.body.html(html);
 
-                if (!Object.keys(photosSelectedToResize).length)
+                if (!Object.keys(selectedPhotosLocal).length)
                     return;
 
                 // update body status
                 $$(".global-wrapper .status").addClass("hidden");
                 $(".global-wrapper .searching-photos").removeClass("hidden");
 
-                var entries = Object.keys(photosSelectedToResize).map(function (id) {
-                    return photosSelectedToResize[id].entry;
+                var entriesData = Object.keys(selectedPhotosLocal).map(function (id) {
+                    return {
+                        entry: selectedPhotosLocal[id].entry,
+                        skip: selectedPhotosLocal[id].skip
+                    };
                 });
 
-                photosSelectedToResize = {};
-                selectLocalPhotos(entries, true);
+                selectedPhotosLocal = {};
+                selectLocalPhotos(entriesData, true);
             });
         },
 
@@ -325,8 +343,14 @@ Actions = (function () {
                     return;
                 }
 
+                var entriesData = entries.map(function (entry) {
+                    return {
+                        entry: entry
+                    };
+                });
+
                 $(wrapperElem, ".searching-photos").removeClass("hidden");
-                selectLocalPhotos(entries);
+                selectLocalPhotos(entriesData);
             });
         },
 
@@ -352,23 +376,24 @@ Actions = (function () {
                         return;
                     }
 
-                    selectLocalPhotos(entries);
+                    var entriesData = entries.map(function (entry) {
+                        return {
+                            entry: entry
+                        };
+                    });
+
+                    selectLocalPhotos(entriesData);
                 });
             });
         },
 
         localStep3: function Actions_localStep3(params) {
-            // delete inactive photos
-            Object.keys(photosSelectedToResize).forEach(function (id) {
-                if (photosSelectedToResize[id].skip) {
-                    delete photosSelectedToResize[id];
-                }
+            var fit = Settings.get("lastUsedFitType");
+            var selectedPhotosIds = Object.keys(selectedPhotosLocal).filter(function (id) {
+                return !selectedPhotosLocal[id].skip;
             });
 
-            var selectedPhotos = Object.keys(photosSelectedToResize);
-            var fit = Settings.get("lastUsedFitType");
-
-            params.numPhotosSelected = selectedPhotos.length;
+            params.numPhotosSelected = selectedPhotosIds.length;
             params.size = Settings.get("lastUsedSize");
             params.quality = Settings.get("lastUsedQuality");
             params.allowEnlarge = Settings.get("lastUsedAllowEnlarge");
@@ -377,10 +402,10 @@ Actions = (function () {
             params.fitHeight = (fit === "height");
             params.fitBiggest = (fit === "biggest");
 
-            params.photos = selectedPhotos.map(function (id) {
+            params.photos = selectedPhotosIds.map(function (id) {
                 return {
                     id: id,
-                    dataUri: photosSelectedToResize[id].dataUri
+                    dataUri: selectedPhotosLocal[id].dataUri
                 };
             });
 
@@ -391,32 +416,27 @@ Actions = (function () {
 
         selectPhoto: function Actions_selectPhoto() {
             var id = this.data("id");
+            var isLocal = this.hasClass("local");
             var isProcessing = !$("header .header-processing").hasClass("hidden");
+            var selectedPhotos = isLocal ? selectedPhotosLocal : selectedPhotosServer;
 
             if (this.toggleClass("img-selected")) {
-                delete photosSelectedToResize[id].skip;
+                delete selectedPhotos[id].skip;
             } else {
-                photosSelectedToResize[id].skip = true;
+                selectedPhotos[id].skip = true;
             }
 
             if (isProcessing)
                 return;
 
-            var noPhotosSelected = Object.keys(photosSelectedToResize).every(function (id) {
-                return (photosSelectedToResize[id].skip === true);
+            var noPhotosSelected = Object.keys(selectedPhotos).every(function (id) {
+                return (selectedPhotos[id].skip === true);
             });
 
-            if (noPhotosSelected) {
-                // update header
-                $$("header .text").each(function () {
-                    this.toggleClass("hidden", !this.hasClass("header-no-active"));
-                });
-            } else {
-                // update header
-                $$("header .text").each(function () {
-                    this.toggleClass("hidden", !this.hasClass("header-procede"));
-                });
-            }
+            // update header
+            $$("header .text").each(function () {
+                this.toggleClass("hidden", !this.hasClass(noPhotosSelected ? "header-no-active" : "header-procede"));
+            });
         },
 
         releselectPhotos: function Actions_releselectPhotos() {
@@ -460,11 +480,11 @@ Actions = (function () {
             var resizeProgressPrc = $(".resize-progress-prc");
             var tasksDone = 0;
 
-            Object.keys(photosSelectedToResize).forEach(function (id, index, totalIds) {
+            Object.keys(selectedPhotosLocal).forEach(function (id, index, totalIds) {
                 writeTasks[id] = function (callback) {
                     var photo = $("[data-id='" + id + "']");
 
-                    getBase64FromFileEntry(photosSelectedToResize[id].entry, function (dataUri) {
+                    getBase64FromFileEntry(selectedPhotosLocal[id].entry, function (dataUri) {
                         var img = new Image;
                         img.onload = function () {
                             var resizedDataUri;
@@ -489,7 +509,7 @@ Actions = (function () {
                             }
 
                             var newBlob = restoreExifData(dataUri, resizedDataUri);
-                            overWriteEntry(photosSelectedToResize[id].entry, newBlob, function () {
+                            overWriteEntry(selectedPhotosLocal[id].entry, newBlob, function () {
                                 tasksDone += 1;
                                 var percentsDone = Math.floor(tasksDone / totalIds.length * 100);
 
@@ -507,7 +527,7 @@ Actions = (function () {
             });
 
             parallel(writeTasks, 1, function () {
-                photosSelectedToResize = {};
+                selectedPhotosLocal = {};
 
                 resizeProgress.removeClass("progress-striped");
 
@@ -529,11 +549,26 @@ Actions = (function () {
 
                 Templates.render("server-step-2", params, function (html) {
                     document.body.html(html);
+
+                    if (!filesystems.length) {
+                        // update header
+                        $$("header .text").each(function () {
+                            this.toggleClass("hidden", !this.hasClass("device-none"));
+                        });
+
+                        // update status
+                        $$(".global-wrapper .status").each(function () {
+                            this.toggleClass("hidden", !this.hasClass("no-devices"));
+                        });
+
+                        return;
+                    }
                 });
             });
         },
 
         serverStep2DeviceSelected: function Actions_serverStep2DeviceSelected(params) {
+            // device was selected from "serverStep2"
             if (this instanceof HTMLElement) {
                 params.device = this.value;
             }
@@ -559,28 +594,28 @@ Actions = (function () {
                 }
 
                 function onUIReady() {
-                    var fs;
+                    var fsData;
                     for (var i = 0; i < filesystems.length; i++) {
                         if (filesystems[i].id === params.device) {
-                            fs = filesystems[i].fs;
+                            fsData = filesystems[i];
                             break;
                         }
                     }
 
-                    selectDevice(fs);
+                    selectDevice(fsData.fs, fsData.name);
                 }
             });
         },
 
         serverStep3: function Actions_serverStep3(params) {
-            params.numPhotosSelected = Object.keys(deviceSelectedToUpload.entries).length;
+            params.numPhotosSelected = Object.keys(selectedPhotosServer).length;
             params.fit = true;
             params.profiles = Settings.get("googleProfiles");
 
-            params.photos = Object.keys(deviceSelectedToUpload.entries).map(function (id) {
+            params.photos = Object.keys(selectedPhotosServer).map(function (id) {
                 return {
                     id: id,
-                    dataUri: deviceSelectedToUpload.entries[id].dataUri
+                    dataUri: selectedPhotosServer[id].dataUri
                 };
             });
 

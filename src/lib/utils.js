@@ -204,25 +204,16 @@
 
     exports.getDevicePhotos = function (fs, cb) {
         getAllDirectoryFileEntries(fs.root, function (entries) {
-            var parseMimeTasks = [];
-            var output = [];
-            var allowedMimeTypes = ["image/jpeg", "image/png", "image/gif"];
+            var allowedExtensions = ["jpg", "jpeg", "gif", "png"];
 
-            entries.forEach(function (entry) {
-                parseMimeTasks.push(function (cb) {
-                    entry.file(function (fileBlob) {
-                        if (allowedMimeTypes.indexOf(fileBlob.type) !== -1) {
-                            output.push(entry);
-                        }
-
-                        cb();
-                    });
-                });
+            // filtering by file extension is much faster than getting fileentry blob
+            // and filtering by its "type" property
+            entries = entries.filter(function (entry) {
+                var extension = entry.name.split(".").pop().toLowerCase();
+                return (allowedExtensions.indexOf(extension) !== -1);
             });
 
-            parallel(parseMimeTasks, function () {
-                cb(output);
-            });
+            cb(entries);
         });
     };
 

@@ -1,7 +1,7 @@
 <header class="navbar server-step-2" role="banner">
     {{> navigation}}
     <h1>
-        <span class="device-select">
+        <span class="device-select text">
             <select class="form-control device-select" data-action="change/serverStep2DeviceSelected" data-dispatch="1">
                 {{#devices}}
                     <option value="None">Select device...</option>
@@ -9,9 +9,12 @@
                 {{/devices}}
             </select>
         </span>
-        <span class="device-parsed hidden">
+        <span class="header-procede text hidden">
             Done! <a href="#" data-action="click/serverStep3" data-dispatch="1">Procede</a> or <a href="#" data-action="click/releselectDevice">re-select</a> device
         </span>
+        <span class="header-processing text hidden">Processing...</span>
+        <span class="header-no-active text hidden">No selected photos</span>
+        <span class="device-none text hidden">No devices</span>
     </h1>
 </header>
 
@@ -20,8 +23,9 @@
         <div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%"></div>
     </div>
 
-    <div class="text-center lead no-photos-found hidden">No photos found</div>
-    <div class="text-center lead scanning-device hidden">Scanning device for photos. Please wait...</div>
+    <div class="text-center lead status no-photos-found hidden">No photos found</div>
+    <div class="text-center lead status scanning-device hidden">Scanning device for photos. Please wait...</div>
+    <p class="bg-warning lead status beware no-devices hidden">No devices found. If you'd like to upload photos from your computer to Google Plus, try its <a href="https://plus.google.com/photos" target="_blank">web interface</a>.</p>
 
     <div class="device-photos"></div>
 </div>

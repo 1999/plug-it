@@ -2,6 +2,7 @@
     "local": {
         "appInstallDate": 0,
         "appUsedToday": true,
+        "devices": {},
         "googleProfiles": [],
         "isDebug": true,
         "lastUsedAllowEnlarge": false,
