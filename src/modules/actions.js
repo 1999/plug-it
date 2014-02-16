@@ -126,6 +126,7 @@ Actions = (function () {
                 var totalImagesLoaded = 0;
                 var bar = $(progress, ".progress-bar");
                 var processedDevicePhotos = Settings.get("devices")[deviceName] || [];
+                var anyPhotosActive = false;
 
                 // set UUID to every FileEntry
                 entries.forEach(function (fileEntry) {
@@ -140,10 +141,18 @@ Actions = (function () {
                             selectedPhotosServer[id].dataUri = res.dataUri;
 
                             var photo = $(photosWrapper, "[data-id='" + id + "']");
-                            photo.toggleClass("img-selected", (processedDevicePhotos.indexOf(fileEntry.fullPath) === -1));
+                            var isNewFile = (processedDevicePhotos.indexOf(fileEntry.fullPath) === -1);
+
                             $(photo, ".spinner").addClass("hidden");
                             $(photo, ".img-container").css("backgroundImage", "url(" + res.dataUri + ")");
                             $(photo, ".photos-dms").html(res.width + "x" + res.height);
+
+                            photo.toggleClass("img-selected", isNewFile);
+                            if (isNewFile) {
+                                anyPhotosActive = true;
+                            } else {
+                                selectedPhotosServer[id].skip = true;
+                            }
 
                             totalImagesLoaded += 1;
                             var barPercentsLoaded = Math.floor(totalImagesLoaded / entries.length * 100);
@@ -172,7 +181,7 @@ Actions = (function () {
 
                     // update header
                     $$("header .text").each(function () {
-                        this.toggleClass("hidden", !this.hasClass("header-procede"));
+                        this.toggleClass("hidden", !this.hasClass(anyPhotosActive ? "header-procede" : "header-no-active"));
                     });
                 });
             });
