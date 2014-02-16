@@ -166,3 +166,8 @@ header h1 .device-select {
     -webkit-filter: none;
     border-bottom-color: #428bca;
 }
+
+.img-stripe .img-container-err {
+    -webkit-filter: none;
+    border-bottom-color: #d9534f;
+}

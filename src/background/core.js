@@ -105,7 +105,7 @@ window.onerror = function(msg, url, line, column, err) {
         openAppWindow({
             state: "serverStep2DeviceSelected",
             params: {
-                device: storageInfo.id
+                value: storageInfo.id
             }
         });
     });

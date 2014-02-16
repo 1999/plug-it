@@ -256,38 +256,37 @@
         });
     };
 
-
-
-
-
-
-
-    exports.strpad = function (str) {
-        str = str + "";
-        return (str.length === 1) ? "0" + str : str;
-    };
-
-    exports.getCurrentLocale = function () {
-        return chrome.i18n.getMessage("@@ui_locale").split("_")[0];
-    };
-
-    /**
-     * Копирование свойств объекта from в объект to
-     * @param {Object} from
-     * @param {Object} to
-     * @return {Object} to
-     */
-    exports.copyOwnProperties = function (from, to) {
-        if (typeof from !== "object" || typeof to !== "object")
-            throw new TypeError("Not an object");
-
-        for (var prop in from) {
-            if (from.hasOwnProperty(prop)) {
-                to[prop] = from[prop];
+    exports.auth = function (onSuccess, onFail) {
+        chrome.identity.getAuthToken({
+            interactive: true
+        }, function (token) {
+            if (chrome.runtime.lastError) {
+                onFail();
+                return;
             }
-        }
 
-        return to;
+            loadResource("https://www.googleapis.com/oauth2/v2/userinfo", {
+                headers: {
+                    Authorization: "Bearer " + token
+                },
+                onload: function () {
+                    var json;
+
+                    try {
+                        json = JSON.parse(this.responseText)
+                    } catch (ex) {}
+
+                    if (json) {
+                        onSuccess(token);
+                    } else {
+                        onFail();
+                    }
+                },
+                onerror: function (evt) {
+                    onFail();
+                }
+            });
+        });
     };
 
     /**
@@ -316,7 +315,16 @@
         return result;
     };
 
-    exports.loadResource = function(url, options, ctx) {
+    exports.createRequestParams = function (params) {
+        var output = [];
+
+        for (var key in params)
+            output.push(encodeURIComponent(key) + "=" + encodeURIComponent(params[key]));
+
+        return output.join("&");
+    };
+
+    exports.loadResource = function (url, options, ctx) {
         var xhr = new XMLHttpRequest;
         var method = options.method || "GET";
         var isXML = false;
@@ -357,33 +365,7 @@
                     return;
                 }
 
-                var responseXML = null;
-
-                if (isXML && !xhr.responseXML) {
-                    // VK can response with invalid characters, replace them
-                    // @see http://msdn.microsoft.com/en-us/library/k1y7hyy9(v=vs.71).aspx
-                    var invalidCharCodes = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 65534, 65535].map(function (charCode) {
-                        return String.fromCharCode(charCode);
-                    });
-
-                    var invalidSymbolsRegex = new RegExp("[" + invalidCharCodes.join("|") + "]", "gm");
-                    var responseText = xhr.responseText.replace(/[\x00-\x1f]/, "").replace(invalidSymbolsRegex, "");
-
-                    // re-create XMLDocument
-                    var parser = new DOMParser;
-                    var doc = parser.parseFromString(responseText, "text/xml");
-
-                    if (!doc || !(doc instanceof XMLDocument))
-                        throw new Error("URL was not valid: " + url);
-
-                    var parseError = doc.querySelector("parsererror");
-                    if (parseError)
-                        throw new Error("Parse error for " + url + ": " + parseError.innerText);
-
-                    responseXML = doc;
-                }
-
-                var arg = isXML ? (xhr.responseXML || responseXML) : xhr.response;
+                var arg = isXML ? xhr.responseXML : xhr.response;
                 options.onload.call(ctx || xhr, arg);
             };
         }

@@ -1,12 +1,14 @@
 <header class="navbar" role="banner">
     {{> navigation}}
     <h1>
-        <span class="upload-options">
-            {{numPhotosSelected}} photos selected. <a href="#" data-action="click/startUpload">Upload 'em</a>
+        <span class="upload-options text">
+            {{numPhotosSelected}} photo(s) selected. <a href="#" data-action="click/startUpload">Upload 'em</a>
         </span>
-        <span class="upload-done hidden">
+        <span class="upload-done text hidden">
             Done! <a href="#" data-action="click/home" data-dispatch="1">Again</a> or <a href="#" data-action="click/enough">Enough</a>
         </span>
+        <span class="upload-processing text hidden">Uploading...</span>
+        <span class="upload-auth text hidden">Authenticating...</span>
     </h1>
 </header>
 
@@ -18,20 +20,7 @@
 
     <form class="form-inline form-resize-options" role="form">
         <h2>Upload options</h2>
-
-        {{#profiles.length}}
-            <div class="option-selector">
-                <label>
-                    <select class="form-control upload-profile">
-                    {{#profiles}}
-                        <option value="{{id}}">{{name}}</option>
-                    {{/profiles}}
-                    </select>
-                </label>
-                &nbsp;
-                <button type="button" class="btn btn-default" data-action="click/addNewProfile">or add new profile...</button>
-            </div>
-        {{/profiles.length}}
+        <p class="bg-warning beware auth-fail hidden">Authentication failed.</p>
 
         <div class="option-selector">
             <label>

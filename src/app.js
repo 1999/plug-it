@@ -32,11 +32,15 @@ parallel({
         var isDispatchAction = (this.data("dispatch") === "1");
         var params = {};
 
+        // add dataset elements
         for (var key in this.dataset) {
             if (key !== "action" && key !== "dispatch") {
                 params[key] = this.dataset[key];
             }
         }
+
+        // add element value
+        params.value = this.value;
 
         if (isDispatchAction) {
             switch (actionName) {

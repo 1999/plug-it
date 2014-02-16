@@ -140,10 +140,10 @@ Actions = (function () {
                             selectedPhotosServer[id].dataUri = res.dataUri;
 
                             var photo = $(photosWrapper, "[data-id='" + id + "']");
+                            photo.toggleClass("img-selected", (processedDevicePhotos.indexOf(fileEntry.fullPath) === -1));
                             $(photo, ".spinner").addClass("hidden");
                             $(photo, ".img-container").css("backgroundImage", "url(" + res.dataUri + ")");
                             $(photo, ".photos-dms").html(res.width + "x" + res.height);
-                            photo.toggleClass("img-selected", (processedDevicePhotos.indexOf(fileEntry.fullPath) === -1))
 
                             totalImagesLoaded += 1;
                             var barPercentsLoaded = Math.floor(totalImagesLoaded / entries.length * 100);
@@ -175,123 +175,6 @@ Actions = (function () {
                         this.toggleClass("hidden", !this.hasClass("header-procede"));
                     });
                 });
-            });
-        });
-    }
-
-    function uploadPhotos(token, cb) {
-        var needsFit = $("[name='fit']").checked;
-        var progress = $(".progress").removeClass("hidden");
-        var uploadProgressPrc = $(".upload-progress-prc");
-        var bar = $(progress, ".progress-bar");
-        var uploadTasks = {};
-        var photosUploaded = 0;
-
-        Object.keys(selectedPhotosServer).forEach(function (id, index, totalIds) {
-            uploadTasks[id] = function (callback) {
-                var fileEntry = selectedPhotosServer[id].entry;
-
-                var uploadBlob = function (blob) {
-                    upload(blob, fileEntry.name, token, function (link) {
-                        var photo = $("[data-id='" + id + "']").addClass("img-container-done");
-                        console.log(link);
-
-                        photosUploaded += 1;
-                        var percent = Math.floor(photosUploaded / totalIds.length * 100);
-
-                        bar.attr("aria-valuenow", percent).css("width", percent + "%");
-                        uploadProgressPrc.html(percent);
-
-                        callback();
-                    }, function (percent) {
-                        var percentTotal = photosUploaded / totalIds.length * 100;
-                        var percentCurrent = 1 / totalIds.length * percent;
-                        var percentSum = Math.min(Math.floor(percentTotal + percentCurrent), 100);
-
-                        bar.attr("aria-valuenow", percentSum).css("width", percentSum + "%");
-                        uploadProgressPrc.html(percentSum);
-                    }, function (err) {
-                        // ...
-                    });
-                };
-
-                if (needsFit) {
-                    fitTo2048(fileEntry, uploadBlob);
-                } else {
-                    fileEntry.file(uploadBlob);
-                }
-            };
-        });
-
-        parallel(uploadTasks, 1, function () {
-            progress.removeClass("progress-striped");
-
-            $("header .upload-done").removeClass("hidden");
-            $("header .upload-options").addClass("hidden");
-        });
-    }
-
-    function recheckGoogleProfile(token, onSuccess, onFail) {
-        loadResource("https://www.googleapis.com/oauth2/v2/userinfo", {
-            headers: {
-                Authorization: "Bearer " + token
-            },
-            onload: function () {
-                var json;
-
-                try {
-                    json = JSON.parse(this.responseText)
-                } catch (ex) {
-                    // TODO send message
-                }
-
-                if (json) {
-                    onSuccess(json);
-                } else {
-                    onFail();
-                }
-            },
-            onerror: function (evt) {
-                // TODO evt.type
-                onFail();
-            }
-        });
-    }
-
-    function authNewGoogleProfile(onSuccess, onFail) {
-        chrome.identity.getAuthToken({
-            interactive: true
-        }, function (token) {
-            if (chrome.runtime.lastError) {
-                // TODO send message JSON.stringify(chrome.runtime.lastError)
-                onFail();
-
-                return;
-            }
-
-            recheckGoogleProfile(token, function (json) {
-                json.token = token;
-
-                var googleProfiles = Settings.get("googleProfiles");
-                var isNewProfile = true;
-
-                for (var i = 0; i < googleProfiles.length; i++) {
-                    if (googleProfiles[i].id === json.id) {
-                        googleProfiles[i] = json;
-                        isNewProfile = false;
-
-                        break;
-                    }
-                }
-
-                if (isNewProfile) {
-                    googleProfiles.push(json);
-                }
-
-                Settings.set("googleProfiles", googleProfiles);
-                onSuccess(json);
-            }, function (err) {
-                console.error(err);
             });
         });
     }
@@ -568,11 +451,6 @@ Actions = (function () {
         },
 
         serverStep2DeviceSelected: function Actions_serverStep2DeviceSelected(params) {
-            // device was selected from "serverStep2"
-            if (this instanceof HTMLElement) {
-                params.device = this.value;
-            }
-
             requestRemovableFilesystems(function (filesystems) {
                 var isUIDrawn = ($(".server-step-2") !== null);
 
@@ -583,7 +461,7 @@ Actions = (function () {
                         return {
                             id: fs.id,
                             name: fs.name,
-                            selected: (fs.id === params.device)
+                            selected: (fs.id === params.value)
                         };
                     });
 
@@ -596,7 +474,7 @@ Actions = (function () {
                 function onUIReady() {
                     var fsData;
                     for (var i = 0; i < filesystems.length; i++) {
-                        if (filesystems[i].id === params.device) {
+                        if (filesystems[i].id === params.value) {
                             fsData = filesystems[i];
                             break;
                         }
@@ -608,11 +486,14 @@ Actions = (function () {
         },
 
         serverStep3: function Actions_serverStep3(params) {
-            params.numPhotosSelected = Object.keys(selectedPhotosServer).length;
-            params.fit = true;
-            params.profiles = Settings.get("googleProfiles");
+            var selectedPhotosIds = Object.keys(selectedPhotosServer).filter(function (id) {
+                return !selectedPhotosServer[id].skip;
+            });
 
-            params.photos = Object.keys(selectedPhotosServer).map(function (id) {
+            params.numPhotosSelected = selectedPhotosIds.length;
+            params.fit = Settings.get("lastUsedFitUpload");
+
+            params.photos = selectedPhotosIds.map(function (id) {
                 return {
                     id: id,
                     dataUri: selectedPhotosServer[id].dataUri
@@ -625,45 +506,94 @@ Actions = (function () {
         },
 
         startUpload: function Actions_startUpload() {
-            var googleProfiles = Settings.get("googleProfiles");
-            var profilesAvailable = $(".upload-profi2le");
-            var selectedProfileId = profilesAvailable ? profilesAvailable.val() : null;
+            var authFail = $(".auth-fail").addClass("hidden");
 
-            if (selectedProfileId) {
-                var token;
-                googleProfiles.forEach(function (profileData) {
-                    if (profileData.id === selectedProfileId) {
-                        token = profileData.token;
-                    }
+            // update header
+            $$("header .text").each(function () {
+                this.toggleClass("hidden", !this.hasClass("upload-auth"));
+            });
+
+            auth(function (token) {
+                // update header
+                $$("header .text").each(function () {
+                    this.toggleClass("hidden", !this.hasClass("upload-processing"));
                 });
 
-                recheckGoogleProfile(token, function (json) {
-                    uploadPhotos(token);
-                }, function () {
-                    // ...
+                var selectedPhotosIds = Object.keys(selectedPhotosServer).filter(function (id) {
+                    return !selectedPhotosServer[id].skip;
                 });
-            } else {
-                authNewGoogleProfile(function (profileData) {
-                    uploadPhotos(profileData.token);
-                }, function (err) {
-                    // ...
+
+                var needsFit = $("[name='fit']").checked;
+                var progress = $(".progress").removeClass("hidden");
+                var uploadProgressPrc = $(".upload-progress-prc");
+                var bar = $(progress, ".progress-bar");
+
+                var uploadTasks = {};
+                var photosUploaded = 0;
+
+                // save selected params for future use
+                Settings.set("lastUsedFitUpload", needsFit);
+
+                selectedPhotosIds.forEach(function (id) {
+                    uploadTasks[id] = function (cb) {
+                        var fileEntry = selectedPhotosServer[id].entry;
+
+                        var onEnd = function (success) {
+                            var photo = $("[data-id='" + id + "']").addClass(success ? "img-container-done" : "img-container-err");
+
+                            photosUploaded += 1;
+                            var percent = Math.floor(photosUploaded / selectedPhotosIds.length * 100);
+
+                            bar.attr("aria-valuenow", percent).css("width", percent + "%");
+                            uploadProgressPrc.html(percent);
+
+                            cb();
+                        };
+
+                        var uploadBlob = function (blob) {
+                            upload(blob, fileEntry.name, token, function (link) {
+                                console.log(link);
+                                onEnd(true);
+                            }, function (percent) {
+                                var percentTotal = photosUploaded / selectedPhotosIds.length * 100;
+                                var percentCurrent = 1 / selectedPhotosIds.length * percent;
+                                var percentSum = Math.min(Math.floor(percentTotal + percentCurrent), 100);
+
+                                bar.attr("aria-valuenow", percentSum).css("width", percentSum + "%");
+                                uploadProgressPrc.html(percentSum);
+                            }, function (err) {
+                                onEnd(false);
+                            });
+                        };
+
+                        if (needsFit) {
+                            fitTo2048(fileEntry, uploadBlob);
+                        } else {
+                            fileEntry.file(uploadBlob);
+                        }
+                    };
                 });
-            }
+
+                parallel(uploadTasks, 1, function () {
+                    progress.removeClass("progress-striped");
+
+                    // update header
+                    $$("header .text").each(function () {
+                        this.toggleClass("hidden", !this.hasClass("upload-done"));
+                    });
+                });
+            }, function () {
+                authFail.removeClass("hidden");
+
+                // update header
+                $$("header .text").each(function () {
+                    this.toggleClass("hidden", !this.hasClass("upload-options"));
+                });
+            });
         },
 
         enough: function Actions_enough() {
             window.close();
-        },
-
-        addNewProfile: function Actions_addNewProfile() {
-            // authNewGoogleProfile(function (profileData) {
-            //     uploadPhotos(profileData.token);
-            // }, function (err) {
-            //     // ...
-            // });
-
-            // update header
-            // update selected value on end
         }
     };
 })();
