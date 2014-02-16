@@ -484,6 +484,7 @@ Actions = (function () {
                         }
                     }
 
+                    $(".procede-step-3").data("device", fsData.name);
                     selectDevice(fsData.fs, fsData.name);
                 }
             });
@@ -518,7 +519,7 @@ Actions = (function () {
             });
         },
 
-        startUpload: function Actions_startUpload() {
+        startUpload: function Actions_startUpload(params) {
             var authFail = $(".auth-fail").addClass("hidden");
 
             // update header
@@ -551,7 +552,7 @@ Actions = (function () {
                     uploadTasks[id] = function (cb) {
                         var fileEntry = selectedPhotosServer[id].entry;
 
-                        var onEnd = function (success) {
+                        var onUploadEnd = function (success) {
                             var photo = $("[data-id='" + id + "']").addClass(success ? "img-container-done" : "img-container-err");
 
                             photosUploaded += 1;
@@ -566,7 +567,7 @@ Actions = (function () {
                         var uploadBlob = function (blob) {
                             upload(blob, fileEntry.name, token, function (link) {
                                 console.log(link);
-                                onEnd(true);
+                                onUploadEnd(true);
                             }, function (percent) {
                                 var percentTotal = photosUploaded / selectedPhotosIds.length * 100;
                                 var percentCurrent = 1 / selectedPhotosIds.length * percent;
@@ -575,7 +576,7 @@ Actions = (function () {
                                 bar.attr("aria-valuenow", percentSum).css("width", percentSum + "%");
                                 uploadProgressPrc.html(percentSum);
                             }, function (err) {
-                                onEnd(false);
+                                onUploadEnd(false);
                             });
                         };
 
@@ -589,6 +590,14 @@ Actions = (function () {
 
                 parallel(uploadTasks, 1, function () {
                     progress.removeClass("progress-striped");
+
+                    // save device photos list for future
+                    var devices = Settings.get("devices");
+                    devices[params.device] = Object.keys(selectedPhotosServer).map(function (id) {
+                        return selectedPhotosServer[id].entry.fullPath;
+                    });
+
+                    Settings.set("devices", devices);
 
                     // update header
                     $$("header .text").each(function () {
