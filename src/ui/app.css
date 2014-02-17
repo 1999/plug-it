@@ -177,3 +177,7 @@ header h1 .device-select {
     -webkit-filter: none;
     border-bottom-color: #d9534f;
 }
+
+.see-it {
+    margin-left: 8px;
+}

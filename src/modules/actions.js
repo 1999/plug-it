@@ -638,6 +638,9 @@ Actions = (function () {
 
                     // update navigation
                     $$("nav span[role='button']").removeClass("tmp-disabled");
+
+                    // show "view photos" link
+                    $(".see-it").removeClass("hidden");
                 });
             }, function () {
                 authFail.removeClass("hidden");
@@ -647,6 +650,11 @@ Actions = (function () {
                     this.toggleClass("hidden", !this.hasClass("upload-options"));
                 });
             });
+        },
+
+        viewUploadedPhotos: function Actions_viewUploadedPhotos() {
+            var profileData = Settings.get("profile");
+            window.open(Config.constants.dropbox_url.replace("ID", profileData.id));
         },
 
         enough: function Actions_enough() {
