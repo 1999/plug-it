@@ -115,7 +115,7 @@ window.onerror = function(msg, url, line, column, err) {
     // });
 
     // chrome.identity.onSignInChanged && chrome.identity.onSignInChanged.addListener(function (account, signedIn) {
-    //     console.log(account, signedIn);
+    //     console.log(account.id, signedIn);
     // });
 
     // @see https://code.google.com/p/chromium/issues/detail?id=342169
