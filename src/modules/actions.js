@@ -554,7 +554,9 @@ Actions = (function () {
                 this.toggleClass("hidden", !this.hasClass("upload-auth"));
             });
 
-            auth(function (token) {
+            auth(function (token, jsonData) {
+                Settings.set("profile", jsonData);
+
                 // update header
                 $$("header .text").each(function () {
                     this.toggleClass("hidden", !this.hasClass("upload-processing"));

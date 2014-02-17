@@ -311,7 +311,7 @@
                     } catch (ex) {}
 
                     if (json) {
-                        onSuccess(token);
+                        onSuccess(token, json);
                     } else {
                         onFail();
                     }
