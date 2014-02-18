@@ -1,5 +1,6 @@
 {
     "name" : "__MSG_appName__ DEV",
+    "short_name" : "__MSG_shortAppName__ DEV",
     "version" : "1.0",
     "manifest_version" : 2,
     "minimum_chrome_version" : "30",

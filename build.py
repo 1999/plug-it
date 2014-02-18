@@ -144,6 +144,7 @@ def release():
         manifestData = json.loads(manifest.read())
         del manifestData["key"]
         manifestData["name"] = re.sub(r"\sDEV", "", manifestData["name"])
+        manifestData["short_name"] = re.sub(r"\sDEV", "", manifestData["short_name"])
 
         with open("out/src/manifest.json", "w") as builtManifest:
             builtManifest.write(json.dumps(manifestData, indent=4))
