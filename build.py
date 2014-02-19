@@ -3,6 +3,7 @@ import sys
 import json
 import shutil
 import re
+import fnmatch
 import time
 
 
@@ -63,10 +64,30 @@ def rebuildConfig(tweak_map={}, config_file_path="src/config.js"):
     constants = json.loads(re.sub(r"\s/\*.+", "", constantsFile.read()))
     constantsFile.close()
 
+    # search for templates i18n dependencies
+    tplData = {}
+    for file in os.listdir("templates"):
+        if fnmatch.fnmatch(file, "*.mustache"):
+            tplName = re.sub(r".mustache", "", file)
+            tplData[tplName] = {
+                "i18n": [],
+                "deps": []
+            }
+
+            with open(os.path.join("templates", file)) as tplFile:
+                tplContents = tplFile.read()
+
+                for match in re.finditer(r'{{i18n_(.+?)}}', tplContents, re.MULTILINE):
+                    tplData[tplName]["i18n"].append(match.group(1))
+
+                for match in re.finditer(r'{{>\s(.+?)}}', tplContents, re.MULTILINE):
+                    tplData[tplName]["deps"].append(match.group(1))
+
     configChunks = {
         "default_settings_local": mergeChunks(settings["local"], tweak_map["default_settings_local"] if "default_settings_local" in tweak_map else {}),
         "default_settings_sync": mergeChunks(settings["sync"], tweak_map["default_settings_sync"] if "default_settings_sync" in tweak_map else {}),
         "constants": mergeChunks(constants, tweak_map["constants"] if "constants" in tweak_map else {}),
+        "templates": tplData,
         "buildInfo": {
             "revision": check_output(["git", "rev-parse", "--verify", "HEAD"]).decode()[:10],
             "date": int(time.time())
@@ -80,7 +101,6 @@ def templates():
     """
     Combines templates into one file
     """
-    import fnmatch
 
     combined = {}
     for file in os.listdir("templates"):

@@ -7,5 +7,14 @@
     },
     "appDescription": {
         "en": "Resize photos on your computer and upload them from attached devices to Google Plus Cloud"
+    },
+    "home": {
+        "en": "Home"
+    },
+    "back": {
+        "en": "Back"
+    },
+    "forward": {
+        "en": "Forward"
     }
 }

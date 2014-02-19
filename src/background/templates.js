@@ -42,11 +42,24 @@ Templates = (function () {
             var requestId = Math.random() + "";
             pendingCallbacks[requestId] = callback;
 
-            iframe.contentWindow.postMessage({
+            var options = {
                 id: requestId,
                 tplName: tplName,
                 placeholders: placeholders
-            }, "*");
+            };
+
+            if (Config.templates[tplName]) {
+                options.deps = Config.templates[tplName].deps;
+
+                var templates = Config.templates[tplName].deps.concat(tplName);
+                templates.forEach(function (tplName) {
+                    Config.templates[tplName].i18n.forEach(function (i18nKey) {
+                        options.placeholders["i18n_" + i18nKey] = chrome.i18n.getMessage(i18nKey);
+                    });
+                });
+            }
+
+            iframe.contentWindow.postMessage(options, "*");
         }
     };
 })();
