@@ -16,5 +16,50 @@
     },
     "forward": {
         "en": "Forward"
+    },
+    "noPhotosFound": {
+        "en": "No photos found"
+    },
+    "noPhotosChosen": {
+        "en": "No photos chosen"
+    },
+    "searchingPhotos": {
+        "en": "Searching for photos. Please wait"
+    },
+    "scanningDirStructure": {
+        "en": "Scanning directory structure. Please wait"
+    },
+    "processing": {
+        "en": "Processing"
+    },
+    "headerNoPhotos": {
+        "en": "No selected photos"
+    },
+    "done": {
+        "en": "Done"
+    },
+    "bewareResize": {
+        "en": "Beware! Selected photos will be overwritten after resize!"
+    },
+    "resizeOptions": {
+        "en": "Resize options"
+    },
+    "qualityResultPhotos": {
+        "en": "Result photos quality"
+    },
+    "allowIncrease": {
+        "en": "Allow photo increase"
+    },
+    "resizeProgress": {
+        "en": "Resize progress"
+    },
+    "fitWidth": {
+        "en": "Fit width"
+    },
+    "fitHeight": {
+        "en": "Fit height"
+    },
+    "fitBiggest": {
+        "en": "Fit biggest dimension"
     }
 }
