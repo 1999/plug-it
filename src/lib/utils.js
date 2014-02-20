@@ -231,8 +231,8 @@
     };
 
     exports.getDevicePhotos = function (fs, cb) {
-        fs.root.getDirectory(DEVICE_PHOTOS_DIR, {create: false}, function (photosDir) {
-            getAllDirectoryFileEntries(photosDir, function (entries) {
+        function getDirEntriesRecursive(dir, cb) {
+            getAllDirectoryFileEntries(dir, function (entries) {
                 var allowedExtensions = ["jpg", "jpeg", "gif", "png"];
     
                 // filtering by file extension is much faster than getting fileentry blob
@@ -244,9 +244,12 @@
     
                 cb(entries);
             });
+        }
+        
+        fs.root.getDirectory(DEVICE_PHOTOS_DIR, {create: false}, function (photosDir) {
+            getDirEntriesRecursive(photosDir, cb);
         }, function (err) {
-            console.error(err);
-            cb([]);
+            getDirEntriesRecursive(fs.root, cb);
         });
     };
 
