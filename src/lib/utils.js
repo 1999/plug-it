@@ -1,5 +1,8 @@
 (function (exports) {
     "use strict";
+    
+    var DEVICE_PHOTOS_DIR = "DCIM";
+    
 
     // use one worker to generate blob from dataUri
     // it's intresting to know, but web worker does this 10x times faster
@@ -228,17 +231,25 @@
     };
 
     exports.getDevicePhotos = function (fs, cb) {
-        getAllDirectoryFileEntries(fs.root, function (entries) {
-            var allowedExtensions = ["jpg", "jpeg", "gif", "png"];
-
-            // filtering by file extension is much faster than getting fileentry blob
-            // and filtering by its "type" property
-            entries = entries.filter(function (entry) {
-                var extension = entry.name.split(".").pop().toLowerCase();
-                return (allowedExtensions.indexOf(extension) !== -1);
+        function getDirEntriesRecursive(dir, cb) {
+            getAllDirectoryFileEntries(dir, function (entries) {
+                var allowedExtensions = ["jpg", "jpeg", "gif", "png"];
+    
+                // filtering by file extension is much faster than getting fileentry blob
+                // and filtering by its "type" property
+                entries = entries.filter(function (entry) {
+                    var extension = entry.name.split(".").pop().toLowerCase();
+                    return (allowedExtensions.indexOf(extension) !== -1);
+                });
+    
+                cb(entries);
             });
-
-            cb(entries);
+        }
+        
+        fs.root.getDirectory(DEVICE_PHOTOS_DIR, {create: false}, function (photosDir) {
+            getDirEntriesRecursive(photosDir, cb);
+        }, function (err) {
+            getDirEntriesRecursive(fs.root, cb);
         });
     };
 
