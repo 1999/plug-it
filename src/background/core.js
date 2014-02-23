@@ -102,10 +102,18 @@ window.onerror = function(msg, url, line, column, err) {
 
     // open app window when new device is attached
     chrome.system.storage.onAttached.addListener(function (storageInfo) {
-        openAppWindow({
-            state: "serverStep2DeviceSelected",
-            params: {
-                value: storageInfo.id
+        requestRemovableFilesystems(function (filesystems) {
+            var needsOpenAppWindow = filesystems.some(function (fsData) {
+                return (fsData.id === storageInfo.id);
+            });
+
+            if (needsOpenAppWindow) {
+                openAppWindow({
+                    state: "serverStep2DeviceSelected",
+                    params: {
+                        value: storageInfo.id
+                    }
+                });
             }
         });
     });
