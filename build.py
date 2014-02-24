@@ -30,7 +30,7 @@ def i18n():
     shutil.rmtree("src/_locales", ignore_errors=True)
 
     with open("build/i18n.json", "r") as i18n:
-        i18nDict = json.loads(i18n.read())
+        i18nDict = json.load(i18n)
 
         # create new data
         for i18nKey, value in i18nDict.items():
@@ -161,7 +161,7 @@ def release():
 
     # delete key from manifest
     with open("src/manifest.json", "r") as manifest:
-        manifestData = json.loads(manifest.read())
+        manifestData = json.load(manifest)
         del manifestData["key"]
         manifestData["name"] = re.sub(r"\sDEV", "", manifestData["name"])
         manifestData["short_name"] = re.sub(r"\sDEV", "", manifestData["short_name"])
@@ -171,7 +171,7 @@ def release():
 
     # rebuild config with release data
     with open("build/config.cws.json") as file:
-        releaseConfig = json.loads(file.read())
+        releaseConfig = json.load(file)
         rebuildConfig(config_file_path="out/src/config.js", tweak_map=releaseConfig)
 
     # zip archive
