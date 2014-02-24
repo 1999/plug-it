@@ -48,7 +48,7 @@ def i18n():
             os.makedirs(localeDirPath)
 
             with open(localeDirPath + "/messages.json", "w") as messages:
-                messages.write(json.dumps(data, ensure_ascii=False))
+                json.dump(data, messages, ensure_ascii=False)
 
 def rebuildConfig(tweak_map={}, config_file_path="src/config.js"):
     """
@@ -167,7 +167,7 @@ def release():
         manifestData["short_name"] = re.sub(r"\sDEV", "", manifestData["short_name"])
 
         with open("out/src/manifest.json", "w") as builtManifest:
-            builtManifest.write(json.dumps(manifestData, indent=4))
+            json.dump(manifestData, builtManifest, indent=4)
 
     # rebuild config with release data
     with open("build/config.cws.json") as file:
